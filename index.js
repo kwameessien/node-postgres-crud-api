@@ -4,6 +4,7 @@ const cors = require('cors');
 const passport = require('passport');
 const db = require('./queries');
 const authRoutes = require('./routes/auth');
+const { requireAdmin, requireOwnerOrAdmin } = require('./middleware/authorize');
 
 require('./config/passport');
 
@@ -30,11 +31,13 @@ const requireAuth = (req, res, next) => {
     next();
   })(req, res, next);
 };
-app.get('/users', requireAuth, db.getUsers);
-app.get('/users/:id', requireAuth, db.getUserById);
-app.post('/users', requireAuth, db.createUser);
-app.put('/users/:id', requireAuth, db.updateUser);
-app.delete('/users/:id', requireAuth, db.deleteUser);
+// Authorization: list all users and create users = admin only
+app.get('/users', requireAuth, requireAdmin, db.getUsers);
+app.post('/users', requireAuth, requireAdmin, db.createUser);
+// Authorization: get/update/delete = admin or resource owner
+app.get('/users/:id', requireAuth, requireOwnerOrAdmin, db.getUserById);
+app.put('/users/:id', requireAuth, requireOwnerOrAdmin, db.updateUser);
+app.delete('/users/:id', requireAuth, requireOwnerOrAdmin, db.deleteUser);
 
 // 404 handler
 app.use((req, res, next) => {
@@ -46,8 +49,9 @@ app.use((err, req, res, next) => {
   console.error(err.message);
   let status = 500;
   if (err.message === 'User not found' || err.message === 'Invalid user ID') status = 404;
-  else if (err.message === 'Name and email are required' || err.message === 'Name, email and password are required' || err.message === 'Email already registered') status = 400;
+  else if (err.message === 'Name and email are required' || err.message === 'Name, email and password are required' || err.message === 'Email already registered' || err.message === 'Admin already exists') status = 400;
   else if (err.message === 'Invalid email or password') status = 401;
+  else if (err.message === 'Insufficient permissions' || err.message === 'You can only access your own resources') status = 403;
   res.status(status).json({ error: err.message });
 });
 
