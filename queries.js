@@ -1,10 +1,10 @@
 const Pool = require('pg').Pool;
 const pool = new Pool({
-  user: process.env.USER || 'kwameessien',
-  host: 'localhost',
-  database: 'postgres',
-  password: '',
-  port: 5432,
+  user: process.env.PGUSER || process.env.DB_USER || 'kwameessien',
+  host: process.env.PGHOST || 'localhost',
+  database: process.env.PGDATABASE || process.env.DB_NAME || 'postgres',
+  password: process.env.PGPASSWORD || process.env.DB_PASSWORD || '',
+  port: parseInt(process.env.PGPORT || process.env.DB_PORT || '5432', 10),
 });
 const getUsers = (request, response) => {
   pool.query('SELECT * FROM users ORDER BY id ASC', (error, results) => {
