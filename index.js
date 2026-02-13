@@ -5,6 +5,12 @@ const passport = require('passport');
 const db = require('./queries');
 const authRoutes = require('./routes/auth');
 const { requireAdmin, requireOwnerOrAdmin } = require('./middleware/authorize');
+const {
+  handleValidation,
+  createUserValidator,
+  updateUserValidator,
+  userIdValidator,
+} = require('./middleware/validate');
 
 require('./config/passport');
 
@@ -33,11 +39,11 @@ const requireAuth = (req, res, next) => {
 };
 // Authorization: list all users and create users = admin only
 app.get('/users', requireAuth, requireAdmin, db.getUsers);
-app.post('/users', requireAuth, requireAdmin, db.createUser);
+app.post('/users', requireAuth, requireAdmin, createUserValidator, handleValidation, db.createUser);
 // Authorization: get/update/delete = admin or resource owner
-app.get('/users/:id', requireAuth, requireOwnerOrAdmin, db.getUserById);
-app.put('/users/:id', requireAuth, requireOwnerOrAdmin, db.updateUser);
-app.delete('/users/:id', requireAuth, requireOwnerOrAdmin, db.deleteUser);
+app.get('/users/:id', requireAuth, userIdValidator, handleValidation, requireOwnerOrAdmin, db.getUserById);
+app.put('/users/:id', requireAuth, updateUserValidator, handleValidation, requireOwnerOrAdmin, db.updateUser);
+app.delete('/users/:id', requireAuth, userIdValidator, handleValidation, requireOwnerOrAdmin, db.deleteUser);
 
 // 404 handler
 app.use((req, res, next) => {

@@ -2,18 +2,24 @@ const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const db = require('../queries');
+const {
+  handleValidation,
+  registerValidator,
+  loginValidator,
+  createAdminValidator,
+} = require('../middleware/validate');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Bootstrap first admin (only works when no admins exist)
-router.post('/create-admin', db.createAdmin);
+router.post('/create-admin', createAdminValidator, handleValidation, db.createAdmin);
 
 // Register - creates user with hashed password
-router.post('/register', db.registerUser);
+router.post('/register', registerValidator, handleValidation, db.registerUser);
 
 // Login - returns JWT
-router.post('/login', (req, res, next) => {
+router.post('/login', loginValidator, handleValidation, (req, res, next) => {
   passport.authenticate('local', { session: false }, (err, user, info) => {
     if (err) return next(err);
     if (!user) {

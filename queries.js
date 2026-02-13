@@ -15,8 +15,7 @@ const getUsers = (request, response, next) => {
 };
 
 const getUserById = (request, response, next) => {
-  const id = parseInt(request.params.id);
-  if (isNaN(id)) return next(new Error('Invalid user ID'));
+  const id = parseInt(request.params.id, 10);
 
   pool.query('SELECT id, name, email, role FROM users WHERE id = $1', [id], (error, results) => {
     if (error) return next(error);
@@ -27,7 +26,6 @@ const getUserById = (request, response, next) => {
 
 const createUser = (request, response, next) => {
   const { name, email } = request.body;
-  if (!name || !email) return next(new Error('Name and email are required'));
 
   pool.query(
     'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id, name, email, role',
@@ -40,10 +38,8 @@ const createUser = (request, response, next) => {
 };
 
 const updateUser = (request, response, next) => {
-  const id = parseInt(request.params.id);
+  const id = parseInt(request.params.id, 10);
   const { name, email } = request.body;
-  if (isNaN(id)) return next(new Error('Invalid user ID'));
-  if (!name || !email) return next(new Error('Name and email are required'));
 
   pool.query(
     'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING id, name, email, role',
@@ -57,8 +53,7 @@ const updateUser = (request, response, next) => {
 };
 
 const deleteUser = (request, response, next) => {
-  const id = parseInt(request.params.id);
-  if (isNaN(id)) return next(new Error('Invalid user ID'));
+  const id = parseInt(request.params.id, 10);
 
   pool.query('DELETE FROM users WHERE id = $1 RETURNING id, name, email, role', [id], (error, results) => {
     if (error) return next(error);
@@ -69,9 +64,7 @@ const deleteUser = (request, response, next) => {
 
 const registerUser = (request, response, next) => {
   const { name, email, password } = request.body;
-  if (!name || !email || !password) {
-    return next(new Error('Name, email and password are required'));
-  }
+
   bcrypt.hash(password, 10, (err, hash) => {
     if (err) return next(err);
     pool.query(
@@ -95,7 +88,7 @@ const createAdmin = (request, response, next) => {
       return next(new Error('Admin already exists'));
     }
     const { name, email, password } = request.body;
-    if (!name || !email || !password) return next(new Error('Name, email and password are required'));
+
     bcrypt.hash(password, 10, (hashErr, hash) => {
       if (hashErr) return next(hashErr);
       pool.query(
